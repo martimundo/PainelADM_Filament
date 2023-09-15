@@ -14,9 +14,12 @@ use Filament\Resources\Form;
 use Filament\Resources\Resource;
 use Filament\Resources\Table;
 use Filament\Tables;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Str;
 
 class ProductResource extends Resource
 {
@@ -28,13 +31,21 @@ class ProductResource extends Resource
     {
         return $form
             ->schema([
-                TextInput::make('name')->label(__('Nome')),
+                TextInput::make('name')
+                    ->reactive()
+                    ->afterStateUpdated(function ($state, $set) {
+                        $state = Str::slug($state);
+                        $set('slug', $state);
+                    })
+                    ->label(__('Nome')),
                 TextInput::make('description')->label(__('Descrição')),
                 TextInput::make('price')->label(__('Preço')),
                 TextInput::make('amount')->label(__('Qtde')),
-                TextInput::make('slug')->label(__('Slug'))
+                TextInput::make('slug')
+                    ->disabled()
+                    ->label(__('Slug'))
 
-                
+
             ]);
     }
 
@@ -42,30 +53,40 @@ class ProductResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name'),
-                TextColumn::make('amount'),
-                TextColumn::make('price')->money('BRL'),
-                TextColumn::make('slug'),
+                TextColumn::make('name')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('amount')
+                    ->sortable(),
+                TextColumn::make('price')
+                    ->searchable()
+                    ->money('BRL')
+                    ->sortable(),
+                TextColumn::make('slug')
+                    ->sortable(),
                 TextColumn::make('created_at')->date('d/M/Y')
             ])
             ->filters([
-                //
+                Filter::make('price')
+                    ->query(fn(Builder $query) => $query->where('price','>','10'))->label('Preço')
+                        
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
-            ]);
+            ])
+            ->defaultSort('created_at', 'DESC');
     }
-    
+
     public static function getRelations(): array
     {
         return [
             //
         ];
     }
-    
+
     public static function getPages(): array
     {
         return [
@@ -73,5 +94,5 @@ class ProductResource extends Resource
             'create' => Pages\CreateProduct::route('/create'),
             'edit' => Pages\EditProduct::route('/{record}/edit'),
         ];
-    }    
+    }
 }
