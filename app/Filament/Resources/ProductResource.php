@@ -4,10 +4,13 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductResource\Pages;
 use App\Filament\Resources\ProductResource\RelationManagers;
+use App\Filament\Resources\ProductResource\RelationManagers\CategoriesRelationManager;
 use App\Models\Product;
 use Faker\Provider\ar_EG\Text;
 use Filament\Forms;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Form;
@@ -15,6 +18,7 @@ use Filament\Resources\Resource;
 use Filament\Resources\Table;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Illuminate\Database\Eloquent\Builder;
@@ -43,9 +47,13 @@ class ProductResource extends Resource
                 TextInput::make('amount')->label(__('Qtde')),
                 TextInput::make('slug')
                     ->disabled()
-                    ->label(__('Slug'))
-
-
+                    ->label(__('Slug')),
+                FileUpload::make('photo')
+                    ->image()
+                    ->directory('products'),
+                Select::make('categories')
+                ->relationship('categories','name')
+                ->multiple()
             ]);
     }
 
@@ -53,6 +61,11 @@ class ProductResource extends Resource
     {
         return $table
             ->columns([
+                TextColumn::make('id')->sortable(),
+                ImageColumn::make('photo')
+                    ->circular()
+                    ->height(85),
+
                 TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
@@ -68,8 +81,10 @@ class ProductResource extends Resource
             ])
             ->filters([
                 Filter::make('price')
-                    ->query(fn(Builder $query) => $query->where('price','>','10'))->label('Preço')
-                        
+                    ->query(fn (Builder $query) => $query->where('price', '>', '10'))->label('Preço'),
+                Filter::make('amount')
+                    ->query(fn (Builder $query) => $query->where('amount', '>', '0'))->label('Qtde')
+
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -83,7 +98,7 @@ class ProductResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            CategoriesRelationManager::class
         ];
     }
 
