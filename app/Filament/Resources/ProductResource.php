@@ -36,15 +36,25 @@ class ProductResource extends Resource
         return $form
             ->schema([
                 TextInput::make('name')
+                    ->required()
+                    ->minLength(3)
+                    ->maxLength(250)
                     ->reactive()
                     ->afterStateUpdated(function ($state, $set) {
                         $state = Str::slug($state);
                         $set('slug', $state);
                     })
-                    ->label(__('Nome')),
-                TextInput::make('description')->label(__('Descrição')),
-                TextInput::make('price')->label(__('Preço')),
-                TextInput::make('amount')->label(__('Qtde')),
+                    ->label(__('Nome Produto')),
+                TextInput::make('description')
+                    ->minLength(3)
+                    ->maxLength(250)
+                    ->label(__('Descrição')),
+                TextInput::make('price')
+                    ->required()
+                    ->label(__('Preço')),
+                TextInput::make('amount')
+                    ->required()
+                    ->label(__('Qtde')),
                 TextInput::make('slug')
                     ->disabled()
                     ->label(__('Slug')),
@@ -52,8 +62,8 @@ class ProductResource extends Resource
                     ->image()
                     ->directory('products'),
                 Select::make('categories')
-                ->relationship('categories','name')
-                ->multiple()
+                    ->relationship('categories', 'name')
+                    ->multiple()
             ]);
     }
 
@@ -64,7 +74,7 @@ class ProductResource extends Resource
                 TextColumn::make('id')->sortable(),
                 ImageColumn::make('photo')
                     ->circular()
-                    ->height(85),
+                    ->height(70),
 
                 TextColumn::make('name')
                     ->searchable()
